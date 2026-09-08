@@ -1,4 +1,5 @@
 mod modes;
+mod controls;
 
 
 use ratatui::{self, DefaultTerminal, Frame, style::Color::{Black, White}};
