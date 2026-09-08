@@ -1,0 +1,18 @@
+[
+  {
+    "todo": "create the TUI with ratatui",
+    "done": false
+  },
+  {
+    "todo": "write simple writings ...",
+    "done": false
+  },
+  {
+    "todo": "handle user inputs and catch errors gracefully",
+    "done": false
+  },
+  {
+    "todo": "handle custom commands [SAVE, LOAD, EXPORT, COMPILE...]",
+    "done": false
+  }
+]
