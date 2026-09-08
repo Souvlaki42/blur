@@ -1,7 +1,7 @@
 [
   {
     "todo": "create the TUI with ratatui",
-    "done": false
+    "done": true
   },
   {
     "todo": "write simple writings ...",
