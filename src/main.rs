@@ -21,15 +21,17 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
         terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode))?;
 
         let event = crossterm::event::read()?;
+        let the_text = &input_box.clone();
+        let mut splitted: Vec<_> = the_text.split('\n').collect();
         if let crossterm::event::Event::Key(event_key) = event {
             match mode {
                 0 => { ////////////////////// NORMAL MODE ////////////////////////
-                       if !modes::normal_mode(event_key, &mut mode, &mut cursor_x, &mut gcursor).unwrap() {
+                       if !modes::normal_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut splitted).unwrap() {
                            break;
                        }
                 }
                 1 => { /////////////////////// INSERT MODE /////////////////////////
-                       if !modes::insert_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut input_box).unwrap(){
+                       if !modes::insert_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut input_box, &mut splitted).unwrap(){
                            continue;
                        }
                 } /////////////////// END OF INSERT MODE /////////////////////////
@@ -52,10 +54,10 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
 
     match mode {
         0 => {
-            footer_text = format!("NORMAL                                                                                                                               {}, {}  BLUR V0.1", cursor_x, cursor_y);
+            footer_text = format!("NORMAL         {}, {}  BLUR V0.1", cursor_x, cursor_y);
         }
         1 => {
-            footer_text = format!("INSERT                                                                                                                               {}, {}  BLUR V0.1", cursor_x, gcursor);
+            footer_text = format!("INSERT         {}, {}  BLUR V0.1", cursor_x, gcursor);
         }
         _ => {footer_text = "SOME ERRORS, try to relaunch the program                   BLUR V0.1".to_string();}
     }
