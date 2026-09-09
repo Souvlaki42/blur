@@ -10,7 +10,6 @@ pub fn normal_mode (
     cursor_y: &mut i32,
     gcursor: &mut i32,
     splitted: &mut Vec<&str>,
-    the_command_line: &mut String
     ) -> std::io::Result<bool> {
     if controls(event_key, cursor_y, cursor_x, gcursor, splitted).unwrap() {
         return Ok(true);
@@ -19,69 +18,11 @@ pub fn normal_mode (
         crossterm::event::KeyCode::Char('a') => {
             *mode = 1;
         }
-        crossterm::event::KeyCode::Char(';') =>
-        {
-            the_command_line.push(':');
-            *mode = 2;
-        }
         crossterm::event::KeyCode::Char('q') => {
             return Ok(false);
         }
         _ => {}
     }
-    Ok(true)
-}
-
-
-pub fn command_mode(
-    event_key: crossterm::event::KeyEvent,
-    mode: &mut i32,
-    the_command_line: &mut String
-    ) -> std::io::Result<bool>
-{
-    match event_key.code {
-        crossterm::event::KeyCode::Char(c) => 
-        {
-            the_command_line.push(c);
-        }
-        crossterm::event::KeyCode::Backspace =>
-        {
-            the_command_line.pop();
-        }
-        crossterm::event::KeyCode::Esc =>
-        {
-            the_command_line.clear();
-            *mode = 0;
-        }
-        crossterm::event::KeyCode::Enter =>
-        {
-            if !execute_commands(the_command_line).unwrap()
-            {
-                return Ok(false);
-            }
-            *mode = 0;
-
-        }
-        _ => {}
-        
-    }
-    Ok(true)
-}
-
-
-pub fn execute_commands(
-    the_command_line: &mut String
-) -> std::io::Result<bool>
-{
-    if the_command_line == ":w"
-    {
-        println!("The File is Saved....");
-    }
-    else if the_command_line == ":q"
-    {
-        return Ok(false);
-    }
-    the_command_line.clear();
     Ok(true)
 }
 
@@ -155,3 +96,59 @@ pub fn insert_mode(
     }
     Ok(true)
 }
+
+
+
+//////////////////////////////////////////// DEAD CODE BURIED HERE ////////////////////////////////////////////
+
+// pub fn command_mode(
+//     event_key: crossterm::event::KeyEvent,
+//     mode: &mut i32,
+//     the_command_line: &mut String
+//     ) -> std::io::Result<bool>
+// {
+//     match event_key.code {
+//         crossterm::event::KeyCode::Char(c) => 
+//         {
+//             the_command_line.push(c);
+//         }
+//         crossterm::event::KeyCode::Backspace =>
+//         {
+//             the_command_line.pop();
+//         }
+//         crossterm::event::KeyCode::Esc =>
+//         {
+//             the_command_line.clear();
+//             *mode = 0;
+//         }
+//         crossterm::event::KeyCode::Enter =>
+//         {
+//             if !execute_commands(the_command_line).unwrap()
+//             {
+//                 return Ok(false);
+//             }
+//             *mode = 0;
+//
+//         }
+//         _ => {}
+//
+//     }
+//     Ok(true)
+// }
+//
+//
+// pub fn execute_commands(
+//     the_command_line: &mut String
+// ) -> std::io::Result<bool>
+// {
+//     let mut parts: Vec<&str> = the_command_line.split_whitespace().collect();
+//
+//     let output = std::process::Command::new(parts[0])
+//         .args(&parts[1..])
+//         .output()
+//         .expect("Failed to run the command");
+//
+//     println!("{:?}", output);
+//     the_command_line.clear();
+//     Ok(true)
+// }

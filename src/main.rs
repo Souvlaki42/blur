@@ -18,9 +18,8 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     let mut cursor_y = 0;
     let mut gcursor = 0;
     let mut mode = 0;
-   let mut the_command_line = String::new();
     loop {
-        terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode, &the_command_line))?;
+        terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode))?;
 
         let event = crossterm::event::read()?;
         let the_text = &input_box.clone();
@@ -28,7 +27,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
         if let crossterm::event::Event::Key(event_key) = event {
             match mode {
                 0 => { ////////////////////// NORMAL MODE ////////////////////////
-                       if !modes::normal_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut splitted, &mut the_command_line).unwrap() {
+                       if !modes::normal_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut splitted).unwrap() {
                            break;
                        }
                 }
@@ -37,12 +36,12 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                            continue;
                        }
                 }
-                2 => { ////////////////////// COMMAND MODE ////////////////////////////////
-                        if !modes::command_mode(event_key, &mut mode, &mut the_command_line).unwrap()
-                        {
-                            break;
-                        }
-                }
+                // 2 => { ////////////////////// COMMAND MODE ////////////////////////////////
+                //         if !modes::command_mode(event_key, &mut mode, &mut the_command_line).unwrap()
+                //         {
+                //             break;
+                //         }
+                // }
                 _ => {}
             }
         }
@@ -51,8 +50,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
 }
 
 
-
-fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gcursor: i32, mode: i32, the_command_line: &str){
+fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gcursor: i32, mode: i32){
     let areas = ratatui::layout::Layout::vertical([
         ratatui::layout::Constraint::Min(0),
         ratatui::layout::Constraint::Length(1)
@@ -71,9 +69,9 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
         1 => {
             footer_text = format!("INSERT");
         }
-        2 => {
-            footer_text = format!("{}", the_command_line);
-        }
+        // 2 => {
+        //     footer_text = format!("{}", the_command_line);
+        // }
         _ => {footer_text = "SOME ERRORS, try to relaunch the program                   BLUR V0.1".to_string();}
     }
 
