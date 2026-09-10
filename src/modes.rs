@@ -9,6 +9,7 @@ pub fn normal_mode (
     cursor_x: &mut i32,
     cursor_y: &mut i32,
     gcursor: &mut i32,
+    // input_box: &mut String,
     splitted: &mut Vec<&str>,
     ) -> std::io::Result<bool> {
     if controls(event_key, cursor_y, cursor_x, gcursor, splitted).unwrap() {
@@ -20,6 +21,10 @@ pub fn normal_mode (
         }
         crossterm::event::KeyCode::Char('q') => {
             return Ok(false);
+        }
+        crossterm::event::KeyCode::Char('s') => 
+        {
+            *mode = 10;
         }
         _ => {}
     }
@@ -107,31 +112,11 @@ pub fn insert_mode(
 //     the_command_line: &mut String
 //     ) -> std::io::Result<bool>
 // {
-//     match event_key.code {
-//         crossterm::event::KeyCode::Char(c) => 
+//     match mode {
+//         10 => 
 //         {
-//             the_command_line.push(c);
-//         }
-//         crossterm::event::KeyCode::Backspace =>
-//         {
-//             the_command_line.pop();
-//         }
-//         crossterm::event::KeyCode::Esc =>
-//         {
-//             the_command_line.clear();
-//             *mode = 0;
-//         }
-//         crossterm::event::KeyCode::Enter =>
-//         {
-//             if !execute_commands(the_command_line).unwrap()
-//             {
-//                 return Ok(false);
-//             }
-//             *mode = 0;
 //
 //         }
-//         _ => {}
-//
 //     }
 //     Ok(true)
 // }
