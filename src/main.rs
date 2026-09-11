@@ -22,7 +22,10 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     match args.len()
     {
         1 => {}
-        2 => {tab.file_name = args[1].clone();}
+        2 => {
+            tab.input_box = std::fs::read_to_string(&args[1])?;
+            tab.file_name = args[1].clone();
+        }
         _ => { panic!("Error in argument level");}
     }
     loop {
