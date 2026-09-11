@@ -1,3 +1,5 @@
+use std::fs;
+
 use ratatui::{self, DefaultTerminal};
 use crate::controls::{default_controls, controls};
 
@@ -9,7 +11,7 @@ pub fn normal_mode (
     cursor_x: &mut i32,
     cursor_y: &mut i32,
     gcursor: &mut i32,
-    // input_box: &mut String,
+    input_box: &mut String,
     splitted: &mut Vec<&str>,
     ) -> std::io::Result<bool> {
     if controls(event_key, cursor_y, cursor_x, gcursor, splitted).unwrap() {
@@ -25,6 +27,40 @@ pub fn normal_mode (
         crossterm::event::KeyCode::Char('s') => 
         {
             *mode = 10;
+        }
+        _ => {}
+    }
+    Ok(true)
+}
+
+
+pub fn save_mode(
+    event_key: crossterm::event::KeyEvent,
+    the_command_line: &mut String,
+    input_box: &str,
+    mode: &mut i32
+    ) -> std::io::Result<bool>
+{
+    match event_key.code 
+    {
+        crossterm::event::KeyCode::Char(c) =>
+        {
+            the_command_line.push(c);
+        }
+        crossterm::event::KeyCode::Backspace =>
+        {
+            the_command_line.pop();
+        }
+        crossterm::event::KeyCode::Enter => 
+        {
+            std::fs::write(&the_command_line, input_box).expect("failed to write into the file");
+            *mode = 0;
+            the_command_line.clear();
+        }
+        crossterm::event::KeyCode::Esc =>
+        {
+            *mode = 0;
+            the_command_line.clear();
         }
         _ => {}
     }
@@ -109,14 +145,16 @@ pub fn insert_mode(
 // pub fn command_mode(
 //     event_key: crossterm::event::KeyEvent,
 //     mode: &mut i32,
-//     the_command_line: &mut String
+//     the_command_line: &mut String,
+//     input_box: &mut String
 //     ) -> std::io::Result<bool>
 // {
 //     match mode {
 //         10 => 
 //         {
-//
+//             std::fs::write("output.txt", input_box)?;
 //         }
+//         _ => {}
 //     }
 //     Ok(true)
 // }

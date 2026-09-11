@@ -20,7 +20,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     let mut mode = 0;
     let mut the_command_line = String::new();
     loop {
-        terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode))?;
+        terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode, &mut the_command_line))?;
 
         let event = crossterm::event::read()?;
         let the_text = &input_box.clone();
@@ -37,12 +37,12 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                            continue;
                        }
                 }
-                // 2 => { ////////////////////// COMMAND MODE ////////////////////////////////
-                //         if !modes::command_mode(event_key, &mut mode, &mut the_command_line).unwrap()
-                //         {
-                //             break;
-                //         }
-                // }
+                10 => { ////////////////////// COMMAND MODE ////////////////////////////////
+                        if !modes::save_mode(event_key, &mut the_command_line, &input_box, &mut mode).unwrap()
+                        {
+                            break;
+                        }
+                }
                 _ => {}
             }
         }
@@ -71,12 +71,12 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
             footer_text = format!("INSERT");
         }
         10 => {
-            footer_text = format!("{}", the_command_line);
+            footer_text = format!("Save file into : {}", the_command_line);
         }
         _ => {footer_text = "SOME ERRORS, try to relaunch the program                   BLUR V0.1".to_string();}
     }
 
-    let footer_mode = ratatui::widgets::Paragraph::new(footer_text)
+    let footer_mode = ratatui::widgets::Paragraph::new(footer_text.clone())
                 .alignment(ratatui::layout::Alignment::Left)
                 .style(ratatui::style::Style::default()
                     .fg(Black)
@@ -96,6 +96,12 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
             areas[0].x + cursor_x as u16,
             areas[0].y + cursor_y as u16
             ));
+    if mode == 10 {
+        frame.set_cursor_position((
+                areas[1].x + footer_text.len() as u16 + 1,
+                areas[1].y
+                ));
+    }
 
 }
 
