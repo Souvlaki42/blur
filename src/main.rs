@@ -1,8 +1,10 @@
 mod modes;
 mod controls;
+mod helpers;
 
 
 use ratatui::{self, DefaultTerminal, Frame, style::Color::{Black, White}};
+use helpers::Tab;
 
 
 fn main() -> std::io::Result<()> 
@@ -13,32 +15,31 @@ fn main() -> std::io::Result<()>
 
 
 fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
-    let mut input_box = String::new();
-    let mut cursor_x = 0;
-    let mut cursor_y = 0;
-    let mut gcursor = 0;
+    let mut tab = Tab::new();
     let mut mode = 0;
     let mut the_command_line = String::new();
     loop {
-        terminal.draw(|frame| renderer(frame, &input_box, cursor_x, cursor_y, gcursor, mode, &mut the_command_line))?;
+        terminal.draw(|frame| renderer(frame, &tab, mode, &mut the_command_line))?;
 
         let event = crossterm::event::read()?;
-        let the_text = &input_box.clone();
+        let the_text = &tab.input_box.clone();
         let mut splitted: Vec<_> = the_text.split('\n').collect();
         if let crossterm::event::Event::Key(event_key) = event {
             match mode {
                 0 => { ////////////////////// NORMAL MODE ////////////////////////
-                       if !modes::normal_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut input_box, &mut splitted).unwrap() {
+                       if !modes::normal_mode(terminal, &mut tab, event_key, &mut mode, &mut the_command_line, &mut splitted).unwrap()
+                       {
                            break;
                        }
                 }
                 1 => { /////////////////////// INSERT MODE /////////////////////////
-                       if !modes::insert_mode(terminal, event_key, &mut mode, &mut cursor_x, &mut cursor_y, &mut gcursor, &mut input_box, &mut splitted).unwrap(){
+                       if !modes::insert_mode(terminal, &mut tab, event_key, &mut mode, &mut splitted).unwrap()
+                       {
                            continue;
                        }
                 }
                 10 => { ////////////////////// COMMAND MODE ////////////////////////////////
-                        if !modes::save_mode(event_key, &mut the_command_line, &input_box, &mut mode).unwrap()
+                        if !modes::save_mode(&mut tab, event_key, &mut the_command_line, &mut mode).unwrap()
                         {
                             break;
                         }
@@ -51,7 +52,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
 }
 
 
-fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gcursor: i32, mode: i32, the_command_line: &str){
+fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
     let areas = ratatui::layout::Layout::vertical([
         ratatui::layout::Constraint::Min(0),
         ratatui::layout::Constraint::Length(1)
@@ -60,7 +61,8 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
     let footer_text: String;
     let bottom_chunk = ratatui::layout::Layout::horizontal([
         ratatui::layout::Constraint::Percentage(50),
-        ratatui::layout::Constraint::Percentage(50)
+        ratatui::layout::Constraint::Percentage(25),
+        ratatui::layout::Constraint::Percentage(25)
     ]).split(areas[1]);
 
     match mode {
@@ -81,20 +83,26 @@ fn renderer(frame: &mut Frame, input_box: &str, cursor_x: i32, cursor_y: i32, gc
                 .style(ratatui::style::Style::default()
                     .fg(Black)
                     .bg(White));
-    let footer_copyrights = ratatui::widgets::Paragraph::new(format!("{}, {}   BLUR V0.1" , cursor_x, gcursor))
+    let footer_file_name = ratatui::widgets::Paragraph::new(format!("{}", tab.file_name))
+                .alignment(ratatui::layout::Alignment::Left)
+                .style(ratatui::style::Style::default()
+                    .fg(Black)
+                    .bg(White));
+    let footer_copyrights = ratatui::widgets::Paragraph::new(format!("{}, {}   BLUR V0.1" , tab.cursor_x, tab.gcursor))
                 .alignment(ratatui::layout::Alignment::Right)
                 .style(ratatui::style::Style::default()
                     .fg(Black)
                     .bg(White));
 
-    let input = ratatui::text::Text::from(input_box);
+    let input = ratatui::text::Text::from(tab.input_box.clone());
     frame.render_widget(input, areas[0]);
     frame.render_widget(footer_mode, bottom_chunk[0]);
-    frame.render_widget(footer_copyrights, bottom_chunk[1]);
+    frame.render_widget(footer_file_name, bottom_chunk[1]);
+    frame.render_widget(footer_copyrights, bottom_chunk[2]);
 
     frame.set_cursor_position((
-            areas[0].x + cursor_x as u16,
-            areas[0].y + cursor_y as u16
+            areas[0].x + tab.cursor_x as u16,
+            areas[0].y + tab.cursor_y as u16
             ));
     if mode == 10 {
         frame.set_cursor_position((

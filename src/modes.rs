@@ -1,4 +1,5 @@
 use std::fs;
+use crate::helpers::Tab;
 
 use ratatui::{self, DefaultTerminal};
 use crate::controls::{default_controls, controls};
@@ -6,15 +7,13 @@ use crate::controls::{default_controls, controls};
 
 pub fn normal_mode (
     terminal: &DefaultTerminal,
+    tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
     mode: &mut i32,
-    cursor_x: &mut i32,
-    cursor_y: &mut i32,
-    gcursor: &mut i32,
-    input_box: &mut String,
+    the_command_line: &mut String,
     splitted: &mut Vec<&str>,
     ) -> std::io::Result<bool> {
-    if controls(event_key, cursor_y, cursor_x, gcursor, splitted).unwrap() {
+    if controls(event_key, &mut tab.cursor_y, &mut tab.cursor_x, &mut tab.gcursor, splitted).unwrap() {
         return Ok(true);
     }
     match event_key.code {
@@ -26,6 +25,17 @@ pub fn normal_mode (
         }
         crossterm::event::KeyCode::Char('s') => 
         {
+            if tab.file_name.len() > 0
+            {
+                std::fs::write(&tab.file_name, &tab.input_box).expect("failed to write into the file");
+                *mode = 0;
+                the_command_line.clear();
+                return Ok(true);
+            }
+            *mode = 10;
+        }
+        crossterm::event::KeyCode::Char('S') =>
+        {
             *mode = 10;
         }
         _ => {}
@@ -35,12 +45,13 @@ pub fn normal_mode (
 
 
 pub fn save_mode(
+    tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
     the_command_line: &mut String,
-    input_box: &str,
     mode: &mut i32
     ) -> std::io::Result<bool>
 {
+
     match event_key.code 
     {
         crossterm::event::KeyCode::Char(c) =>
@@ -53,9 +64,9 @@ pub fn save_mode(
         }
         crossterm::event::KeyCode::Enter => 
         {
-            std::fs::write(&the_command_line, input_box).expect("failed to write into the file");
+            tab.file_name = the_command_line.to_string();
+            std::fs::write(&tab.file_name, &tab.input_box).expect("failed to write into the file");
             *mode = 0;
-            the_command_line.clear();
         }
         crossterm::event::KeyCode::Esc =>
         {
@@ -69,16 +80,13 @@ pub fn save_mode(
 
 pub fn insert_mode(
     terminal: &DefaultTerminal,
+    tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
     mode: &mut i32,
-    cursor_x: &mut i32,
-    cursor_y: &mut i32,
-    gcursor: &mut i32,
-    input_box: &mut String,
     splitted: &mut Vec<&str>
     ) -> std::io::Result<bool> 
 {
-    if default_controls(event_key, cursor_y, cursor_x, gcursor, splitted)?
+    if default_controls(event_key, &mut tab.cursor_y, &mut tab.cursor_x, &mut tab.gcursor, splitted)?
     {
         return Ok(true);
     }
@@ -93,43 +101,49 @@ pub fn insert_mode(
         crossterm::event::KeyCode::Char(c) => 
         {
             let width = terminal.size()?.width;
-            if *cursor_x >= width.into()
+            if tab.cursor_x >= width.into()
             {
-                input_box.insert(*gcursor as usize,'\n');
-                *cursor_x = 0;
-                *cursor_y += 1;
-                *gcursor += 1;
+                tab.input_box.insert(tab.gcursor as usize,'\n');
+                tab.cursor_x = 0;
+                tab.cursor_y += 1;
+                tab.gcursor += 1;
             }
             
-            input_box.insert(*gcursor as usize, c);
-            *cursor_x += 1;
-            *gcursor += 1;
+            tab.input_box.insert(tab.gcursor as usize, c);
+            tab.cursor_x += 1;
+            tab.gcursor += 1;
         }
 
         crossterm::event::KeyCode::Enter => 
         {
-            input_box.insert(*gcursor as usize, '\n');
-            *cursor_x = 0;
-            *cursor_y += 1;
-            *gcursor += 1;
+            tab.input_box.insert(tab.gcursor as usize, '\n');
+            tab.cursor_x = 0;
+            tab.cursor_y += 1;
+            tab.gcursor += 1;
+        }
+        crossterm::event::KeyCode::Tab => 
+        {
+            tab.input_box.insert_str(tab.gcursor as usize, "    ");
+            tab.cursor_x += 4;
+            tab.gcursor += 4;
         }
 
         crossterm::event::KeyCode::Backspace => 
         {
-            if *gcursor > 0 
+            if tab.gcursor > 0 
             {
-                *gcursor -= 1;
-                input_box.remove(*gcursor as usize);
+                tab.gcursor -= 1;
+                tab.input_box.remove(tab.gcursor as usize);
                 
-                if *cursor_x > 0 
+                if tab.cursor_x > 0 
                 {
-                    *cursor_x -= 1;
+                    tab.cursor_x -= 1;
                 }
 
-                else if *cursor_y > 0
+                else if tab.cursor_y > 0
                 {
-                    *cursor_y -= 1;
-                    *cursor_x = splitted[*cursor_y as usize].len() as i32;
+                    tab.cursor_y -= 1;
+                    tab.cursor_x = splitted[tab.cursor_y as usize].len() as i32;
                 }
             }
         }
