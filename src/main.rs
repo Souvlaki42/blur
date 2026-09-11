@@ -15,9 +15,16 @@ fn main() -> std::io::Result<()>
 
 
 fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
+    let args: Vec<String> = std::env::args().collect();
     let mut tab = Tab::new();
     let mut mode = 0;
     let mut the_command_line = String::new();
+    match args.len()
+    {
+        1 => {}
+        2 => {tab.file_name = args[1].clone();}
+        _ => { panic!("Error in argument level");}
+    }
     loop {
         terminal.draw(|frame| renderer(frame, &tab, mode, &mut the_command_line))?;
 
