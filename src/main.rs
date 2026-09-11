@@ -22,11 +22,16 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     match args.len()
     {
         1 => {}
-        2 => {
-            tab.input_box = std::fs::read_to_string(&args[1])?;
-            tab.file_name = args[1].clone();
+        _ => {
+            match std::fs::read_to_string(&args[1])
+            {
+                Ok(content) => {
+                    tab.input_box = content;
+                    tab.file_name = args[1].clone();
+                }
+                Err(_) => {}
+            }
         }
-        _ => { panic!("Error in argument level");}
     }
     loop {
         terminal.draw(|frame| renderer(frame, &tab, mode, &mut the_command_line))?;
@@ -37,7 +42,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
         if let crossterm::event::Event::Key(event_key) = event {
             match mode {
                 0 => { ////////////////////// NORMAL MODE ////////////////////////
-                       if !modes::normal_mode(terminal, &mut tab, event_key, &mut mode, &mut the_command_line, &mut splitted).unwrap()
+                       if !modes::normal_mode(&mut tab, event_key, &mut mode, &mut the_command_line, &mut splitted).unwrap()
                        {
                            break;
                        }
@@ -48,13 +53,26 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                            continue;
                        }
                 }
-                10 => { ////////////////////// COMMAND MODE ////////////////////////////////
+                ////////////////////// SAVE/OPEN MODES ////////////////////////////////
+                10 => {
                         if !modes::save_mode(&mut tab, event_key, &mut the_command_line, &mut mode).unwrap()
                         {
-                            break;
+                            mode = 402;
                         }
                 }
-                _ => {}
+                11 => {
+                        if !modes::open_mode(&mut tab, event_key, &mut the_command_line, &mut mode).unwrap()
+                        {
+                            mode = 401;
+                        }
+                }
+                _ => {
+                    if crossterm::event::read()?.is_key_press()
+                    {
+                        the_command_line.clear();
+                        mode = 0;
+                    }
+                }
             }
         }
     }
@@ -85,6 +103,15 @@ fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
         10 => {
             footer_text = format!("Save file into : {}", the_command_line);
         }
+        11 => {
+            footer_text = format!("File to Open : {}", the_command_line);
+        }
+        401 => {
+            footer_text = format!("Can't open file, check whether the file exists or not.");
+        }
+        402 => {
+            footer_text = format!("an error occured while saving..., try again later.");
+        }
         _ => {footer_text = "SOME ERRORS, try to relaunch the program                   BLUR V0.1".to_string();}
     }
 
@@ -93,12 +120,13 @@ fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
                 .style(ratatui::style::Style::default()
                     .fg(Black)
                     .bg(White));
-    let footer_file_name = ratatui::widgets::Paragraph::new(format!("{}", tab.file_name))
+    let footer_file_name = ratatui::widgets::Paragraph::new(format!("{}",
+            if tab.file_name.is_empty() {"[Empty File]*".to_string()} else {tab.file_name.clone()}))
                 .alignment(ratatui::layout::Alignment::Left)
                 .style(ratatui::style::Style::default()
                     .fg(Black)
                     .bg(White));
-    let footer_copyrights = ratatui::widgets::Paragraph::new(format!("{}, {}   BLUR V0.1" , tab.cursor_x, tab.gcursor))
+    let footer_copyrights = ratatui::widgets::Paragraph::new(format!("{}, {}   BLUR V0.1" , tab.cursor_x, tab.cursor_y))
                 .alignment(ratatui::layout::Alignment::Right)
                 .style(ratatui::style::Style::default()
                     .fg(Black)
@@ -114,7 +142,7 @@ fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
             areas[0].x + tab.cursor_x as u16,
             areas[0].y + tab.cursor_y as u16
             ));
-    if mode == 10 {
+    if mode == 10 || mode == 11 {
         frame.set_cursor_position((
                 areas[1].x + footer_text.len() as u16 + 1,
                 areas[1].y

@@ -13,7 +13,6 @@ int main()
     int x = 0;
     for (int i = 0; i < 9; i++)
     {
-        ft_putchar(x + '0');
-        x++;
+        ft_putchar(i + '0');
     }
 }

@@ -1,5 +1,3 @@
-use ratatui::{self, DefaultTerminal};
-
 pub fn default_controls (
     event_key: crossterm::event::KeyEvent,
     cursor_y: &mut i32,

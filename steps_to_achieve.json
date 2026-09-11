@@ -1,4 +1,5 @@
 [
+  {
     "todo": "create the TUI with ratatui",
     "done": true
   },
@@ -8,10 +9,14 @@
   },
   {
     "todo": "handle user inputs and catch errors gracefully",
-    "done": false
+    "done": true
   },
   {
     "todo": "handle custom commands [SAVE, LOAD, EXPORT, COMPILE...]",
+    "done": true
+  },
+  {
+    "todo": "add colors",
     "done": false
   }
 ]

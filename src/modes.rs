@@ -1,4 +1,3 @@
-use std::fs;
 use crate::helpers::Tab;
 
 use ratatui::{self, DefaultTerminal};
@@ -6,7 +5,6 @@ use crate::controls::{default_controls, controls};
 
 
 pub fn normal_mode (
-    terminal: &DefaultTerminal,
     tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
     mode: &mut i32,
@@ -23,27 +21,72 @@ pub fn normal_mode (
         crossterm::event::KeyCode::Char('q') => {
             return Ok(false);
         }
-        crossterm::event::KeyCode::Char('s') => 
+        crossterm::event::KeyCode::Char('w') => 
         {
             if tab.file_name.len() > 0
             {
-                std::fs::write(&tab.file_name, &tab.input_box).expect("failed to write into the file");
+                match std::fs::write(&tab.file_name, &tab.input_box)
+                {
+                    Ok(_) => {}
+                    Err(_) => {*mode = 402;}
+                }
                 *mode = 0;
                 the_command_line.clear();
                 return Ok(true);
             }
             *mode = 10;
         }
-        crossterm::event::KeyCode::Char('S') =>
+        crossterm::event::KeyCode::Char('W') =>
         {
             *mode = 10;
+        }
+        crossterm::event::KeyCode::Char('o') =>
+        {
+            *mode = 11;
         }
         _ => {}
     }
     Ok(true)
 }
 
-
+pub fn open_mode(
+    tab: &mut Tab,
+    event_key: crossterm::event::KeyEvent,
+    the_command_line: &mut String,
+    mode: &mut i32
+    ) -> std::io::Result<bool>
+{
+    match event_key.code
+    {
+        crossterm::event::KeyCode::Char(c) =>
+        {
+            the_command_line.push(c);
+        }
+        crossterm::event::KeyCode::Backspace =>
+        {
+            the_command_line.pop();
+        }
+        crossterm::event::KeyCode::Enter =>
+        {
+            tab.input_box.clear();
+            match std::fs::read_to_string(&the_command_line)
+            {
+                Ok(content) => {tab.input_box = content.clone()}
+                Err(_) => {return Ok(false);}
+            }
+            tab.file_name = the_command_line.clone();
+            the_command_line.clear();
+            *mode = 0;
+        }
+        crossterm::event::KeyCode::Esc =>
+        {
+            the_command_line.clear();
+            *mode = 0;
+        }
+        _ => {}
+    }
+    Ok(true)
+}
 pub fn save_mode(
     tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
@@ -65,7 +108,11 @@ pub fn save_mode(
         crossterm::event::KeyCode::Enter => 
         {
             tab.file_name = the_command_line.to_string();
-            std::fs::write(&tab.file_name, &tab.input_box).expect("failed to write into the file");
+            match std::fs::write(&tab.file_name, &tab.input_box)
+            {
+                Ok(_) => {}
+                Err(_) => {return Ok(false);}
+            }
             *mode = 0;
         }
         crossterm::event::KeyCode::Esc =>
