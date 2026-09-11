@@ -5,7 +5,7 @@
   },
   {
     "todo": "write simple writings ...",
-    "done": false
+    "done": true
   },
   {
     "todo": "handle user inputs and catch errors gracefully",
@@ -14,6 +14,10 @@
   {
     "todo": "handle custom commands [SAVE, LOAD, EXPORT, COMPILE...]",
     "done": true
+  },
+  {
+    "todo": "$> blur test.txt should set file_name into argv[1] automatically",
+    "done": false
   },
   {
     "todo": "add colors",
