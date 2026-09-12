@@ -17,10 +17,10 @@
   },
   {
     "todo": "$> blur test.txt should set file_name into argv[1] automatically",
-    "done": false
+    "done": true
   },
   {
     "todo": "add colors",
-    "done": false
+    "done": true
   }
 ]

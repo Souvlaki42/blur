@@ -49,6 +49,21 @@ pub fn normal_mode (
     Ok(true)
 }
 
+pub fn insert_paste(tab: &mut Tab, text: &str) {
+    let text = text.replace("\r\n", "\n").replace('\r', "\n");
+
+    tab.input_box.insert_str(tab.gcursor as usize, &text);
+
+    if let Some(last_newline) = text.rfind('\n') {
+        let newline_count = text.matches('\n').count() as i32;
+        tab.cursor_y += newline_count;
+        tab.cursor_x = (text.len() - last_newline - 1) as i32;
+    } else {
+        tab.cursor_x += text.len() as i32;
+    }
+    tab.gcursor += text.len() as i32;
+}
+
 pub fn open_mode(
     tab: &mut Tab,
     event_key: crossterm::event::KeyEvent,
@@ -147,15 +162,6 @@ pub fn insert_mode(
 
         crossterm::event::KeyCode::Char(c) => 
         {
-            let width = terminal.size()?.width;
-            if tab.cursor_x >= width.into()
-            {
-                tab.input_box.insert(tab.gcursor as usize,'\n');
-                tab.cursor_x = 0;
-                tab.cursor_y += 1;
-                tab.gcursor += 1;
-            }
-            
             tab.input_box.insert(tab.gcursor as usize, c);
             tab.cursor_x += 1;
             tab.gcursor += 1;
