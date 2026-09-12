@@ -107,7 +107,7 @@ src/
 ```
 
 ### Note  
-- The biggest bug in this editor, it crashed when you write more than 1 byted character, so make sure to use only one byted ascii characters, i will fix this 
+- the bug that i found in this editor and still hasn't been fixed is that it crashes when you write more than 1 byted character, so make sure to use only one byted ascii characters, i will fix this later :)
 
 
 ### Architecture notes
