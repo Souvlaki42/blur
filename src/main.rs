@@ -4,7 +4,7 @@ mod helpers;
 
 
 use ratatui::{self, DefaultTerminal, Frame, style::Color::{Black, White}};
-use helpers::Tab;
+use helpers::{Tab, Highlighter};
 
 
 fn main() -> std::io::Result<()> 
@@ -17,6 +17,7 @@ fn main() -> std::io::Result<()>
 fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let mut tab = Tab::new();
+    let highlighter = Highlighter::new();
     let mut mode = 0;
     let mut the_command_line = String::new();
     match args.len()
@@ -29,12 +30,12 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                     tab.input_box = content;
                     tab.file_name = args[1].clone();
                 }
-                Err(_) => {}
+                Err(_) => {tab.file_name = args[1].clone();}
             }
         }
     }
     loop {
-        terminal.draw(|frame| renderer(frame, &tab, mode, &mut the_command_line))?;
+        terminal.draw(|frame| renderer(frame, &tab, &highlighter, mode, &mut the_command_line))?;
 
         let event = crossterm::event::read()?;
         let the_text = &tab.input_box.clone();
@@ -80,7 +81,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
 }
 
 
-fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
+fn renderer(frame: &mut Frame, tab: &Tab, highlighter: &Highlighter, mode: i32, the_command_line: &str){
     let areas = ratatui::layout::Layout::vertical([
         ratatui::layout::Constraint::Min(0),
         ratatui::layout::Constraint::Length(1)
@@ -132,7 +133,8 @@ fn renderer(frame: &mut Frame, tab: &Tab, mode: i32, the_command_line: &str){
                     .fg(Black)
                     .bg(White));
 
-    let input = ratatui::text::Text::from(tab.input_box.clone());
+    // let input = ratatui::text::Text::from(tab.input_box.clone());
+    let input = ratatui::text::Text::from(highlighter.highlight(&tab.input_box, &tab.file_name));
     frame.render_widget(input, areas[0]);
     frame.render_widget(footer_mode, bottom_chunk[0]);
     frame.render_widget(footer_file_name, bottom_chunk[1]);

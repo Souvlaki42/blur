@@ -10,8 +10,8 @@ void ft_putchar(char c)
 
 int main()
 {
-    int x = 0;
-    for (int i = 0; i < 9; i++)
+    int i = 0;
+    while (i < 9)
     {
         ft_putchar(i + '0');
     }
