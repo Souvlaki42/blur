@@ -58,7 +58,7 @@ fn app(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                            }
                     }
                     1 => { /////////////////////// INSERT MODE /////////////////////////
-                           if !modes::insert_mode(terminal, &mut tab, *event_key, &mut mode, &mut splitted).unwrap()
+                           if !modes::insert_mode(&mut tab, *event_key, &mut mode, &mut splitted).unwrap()
                            {
                                continue;
                            }

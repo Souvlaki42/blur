@@ -1,6 +1,5 @@
 use crate::helpers::Tab;
 
-use ratatui::{self, DefaultTerminal};
 use crate::controls::{default_controls, controls};
 
 
@@ -16,6 +15,57 @@ pub fn normal_mode (
     }
     match event_key.code {
         crossterm::event::KeyCode::Char('a') => {
+            let mut offset = 0;
+            for y in 0..tab.cursor_y as usize
+            {
+                offset += splitted[y].len() as i32 + 1;
+            }
+            offset += splitted[tab.cursor_y as usize].len() as i32;
+            if tab.gcursor < offset
+            {
+                tab.cursor_x += 1;
+                tab.gcursor += 1;
+            }
+            *mode = 1;
+        }
+        crossterm::event::KeyCode::Char('i') => {*mode = 1;}
+        crossterm::event::KeyCode::Char('e') => {
+            let start = tab.cursor_x as usize;
+            let new_x = match splitted[tab.cursor_y as usize][start..].find(' ') {
+                Some(rel) => start + rel + 1,
+                None => splitted[tab.cursor_y as usize].len()
+            } as i32;
+
+            tab.gcursor += new_x - tab.cursor_x;
+            tab.cursor_x = new_x;
+            
+        }
+        crossterm::event::KeyCode::Char('b') => {
+            let start = tab.cursor_x as usize;
+            let before = &splitted[tab.cursor_y as usize][..start]; 
+            // let trimmed_len = before.trim_end_matches(' ').len();
+            // before = &before[..trimmed_len];
+            let new_x = match before.rfind(' ') {
+                Some(rel) => rel,
+                None => 0
+            } as i32;
+
+            tab.gcursor += new_x - tab.cursor_x;
+            tab.cursor_x = new_x;
+            
+        }
+        crossterm::event::KeyCode::Char('o') => {
+            let mut offset = 0;
+            for y in 0..tab.cursor_y as usize
+            {
+                offset += splitted[y].len() as i32 + 1;
+            }
+            offset += splitted[tab.cursor_y as usize].len() as i32;
+            tab.gcursor = offset;
+            tab.input_box.insert(tab.gcursor as usize, '\n');
+            tab.gcursor += 1;
+            tab.cursor_y += 1;
+            tab.cursor_x = 0;
             *mode = 1;
         }
         crossterm::event::KeyCode::Char('q') => {
@@ -40,7 +90,7 @@ pub fn normal_mode (
         {
             *mode = 10;
         }
-        crossterm::event::KeyCode::Char('o') =>
+        crossterm::event::KeyCode::Char('O') =>
         {
             *mode = 11;
         }
@@ -48,6 +98,71 @@ pub fn normal_mode (
     }
     Ok(true)
 }
+
+pub fn insert_mode(
+    tab: &mut Tab,
+    event_key: crossterm::event::KeyEvent,
+    mode: &mut i32,
+    splitted: &mut Vec<&str>
+    ) -> std::io::Result<bool> 
+{
+    if default_controls(event_key, &mut tab.cursor_y, &mut tab.cursor_x, &mut tab.gcursor, splitted)?
+    {
+        return Ok(true);
+    }
+    match event_key.code 
+    {
+        crossterm::event::KeyCode::Esc => 
+        {
+            *mode = 0;
+            return Ok(false);
+        }
+
+        crossterm::event::KeyCode::Char(c) => 
+        {
+            tab.input_box.insert(tab.gcursor as usize, c);
+            tab.cursor_x += 1;
+            tab.gcursor += 1;
+        }
+
+        crossterm::event::KeyCode::Enter => 
+        {
+            tab.input_box.insert(tab.gcursor as usize, '\n');
+            tab.cursor_x = 0;
+            tab.cursor_y += 1;
+            tab.gcursor += 1;
+        }
+        crossterm::event::KeyCode::Tab => 
+        {
+            tab.input_box.insert_str(tab.gcursor as usize, "    ");
+            tab.cursor_x += 4;
+            tab.gcursor += 4;
+        }
+
+        crossterm::event::KeyCode::Backspace => 
+        {
+            if tab.gcursor > 0 
+            {
+                tab.gcursor -= 1;
+                tab.input_box.remove(tab.gcursor as usize);
+                
+                if tab.cursor_x > 0 
+                {
+                    tab.cursor_x -= 1;
+                }
+
+                else if tab.cursor_y > 0
+                {
+                    tab.cursor_y -= 1;
+                    tab.cursor_x = splitted[tab.cursor_y as usize].len() as i32;
+                }
+            }
+        }
+        _ => {}
+    }
+    Ok(true)
+}
+
 
 pub fn insert_paste(tab: &mut Tab, text: &str) {
     let text = text.replace("\r\n", "\n").replace('\r', "\n");
@@ -140,70 +255,6 @@ pub fn save_mode(
     Ok(true)
 }
 
-pub fn insert_mode(
-    terminal: &DefaultTerminal,
-    tab: &mut Tab,
-    event_key: crossterm::event::KeyEvent,
-    mode: &mut i32,
-    splitted: &mut Vec<&str>
-    ) -> std::io::Result<bool> 
-{
-    if default_controls(event_key, &mut tab.cursor_y, &mut tab.cursor_x, &mut tab.gcursor, splitted)?
-    {
-        return Ok(true);
-    }
-    match event_key.code 
-    {
-        crossterm::event::KeyCode::Esc => 
-        {
-            *mode = 0;
-            return Ok(false);
-        }
-
-        crossterm::event::KeyCode::Char(c) => 
-        {
-            tab.input_box.insert(tab.gcursor as usize, c);
-            tab.cursor_x += 1;
-            tab.gcursor += 1;
-        }
-
-        crossterm::event::KeyCode::Enter => 
-        {
-            tab.input_box.insert(tab.gcursor as usize, '\n');
-            tab.cursor_x = 0;
-            tab.cursor_y += 1;
-            tab.gcursor += 1;
-        }
-        crossterm::event::KeyCode::Tab => 
-        {
-            tab.input_box.insert_str(tab.gcursor as usize, "    ");
-            tab.cursor_x += 4;
-            tab.gcursor += 4;
-        }
-
-        crossterm::event::KeyCode::Backspace => 
-        {
-            if tab.gcursor > 0 
-            {
-                tab.gcursor -= 1;
-                tab.input_box.remove(tab.gcursor as usize);
-                
-                if tab.cursor_x > 0 
-                {
-                    tab.cursor_x -= 1;
-                }
-
-                else if tab.cursor_y > 0
-                {
-                    tab.cursor_y -= 1;
-                    tab.cursor_x = splitted[tab.cursor_y as usize].len() as i32;
-                }
-            }
-        }
-        _ => {}
-    }
-    Ok(true)
-}
 
 
 

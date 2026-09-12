@@ -18,7 +18,7 @@ impl Highlighter
         Highlighter { syntax_set, theme }
     }
 
-    pub fn highlight(&self, tab: &Tab) -> Vec<ratatui::text::Line>
+    pub fn highlight<'a>(&self, tab: &Tab) -> Vec<ratatui::text::Line<'a>>
     {
         if tab.file_name.is_empty()
         {
