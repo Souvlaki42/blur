@@ -31,14 +31,18 @@ pub fn normal_mode (
         crossterm::event::KeyCode::Char('i') => {*mode = 1;}
         crossterm::event::KeyCode::Char('e') => {
             let start = tab.cursor_x as usize;
+            let mut offset = 0;
             let new_x = match splitted[tab.cursor_y as usize][start..].find(' ') {
                 Some(rel) => start + rel + 1,
                 None => splitted[tab.cursor_y as usize].len()
             } as i32;
+            for y in 0..tab.cursor_y as usize
+            {
+                offset += splitted[y].len() as i32 + 1;
+            }
 
-            tab.gcursor += new_x - tab.cursor_x;
+            tab.gcursor = offset + new_x;
             tab.cursor_x = new_x;
-            
         }
         crossterm::event::KeyCode::Char('b') => {
             let start = tab.cursor_x as usize;
@@ -94,6 +98,32 @@ pub fn normal_mode (
         {
             *mode = 11;
         }
+        crossterm::event::KeyCode::Delete =>
+        {
+            if tab.gcursor < tab.input_box.len() as i32
+            {
+                tab.input_box.remove(tab.gcursor as usize);
+            }
+        }
+        crossterm::event::KeyCode::Backspace => 
+        {
+            if tab.gcursor > 0 
+            {
+                tab.gcursor -= 1;
+                tab.input_box.remove(tab.gcursor as usize);
+                
+                if tab.cursor_x > 0 
+                {
+                    tab.cursor_x -= 1;
+                }
+
+                else if tab.cursor_y > 0
+                {
+                    tab.cursor_y -= 1;
+                    tab.cursor_x = splitted[tab.cursor_y as usize].len() as i32;
+                }
+            }
+        }
         _ => {}
     }
     Ok(true)
@@ -138,7 +168,13 @@ pub fn insert_mode(
             tab.cursor_x += 4;
             tab.gcursor += 4;
         }
-
+        crossterm::event::KeyCode::Delete =>
+        {
+            if tab.gcursor < tab.input_box.len() as i32
+            {
+                tab.input_box.remove(tab.gcursor as usize);
+            }
+        }
         crossterm::event::KeyCode::Backspace => 
         {
             if tab.gcursor > 0 

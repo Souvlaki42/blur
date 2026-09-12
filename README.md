@@ -8,12 +8,12 @@ BLUR V0.1
 
 ## Features
 
-- **Modal editing** — Normal and Insert modes, with vim-style motions
-- **Syntax highlighting** — automatic language detection by file extension via `syntect`, rendered with the `base16-mocha.dark` theme
-- **Save / Open prompts** — inline command-line style file save and open, with error feedback in the footer
-- **Fast paste** — bracketed paste support inserts pasted text in a single operation instead of one keystroke at a time
-- **Horizontal & vertical scrolling** — the viewport follows the cursor without wrapping or corrupting long lines
-- **Status bar** — current mode, file name, and cursor position (`x, y`)
+- **Modal editing** - Normal and Insert modes, with vim-style motions
+- **Syntax highlighting** - automatic language detection by file extension via `syntect`, rendered with the `base16-mocha.dark` theme
+- **Save / Open prompts** - inline command-line style file save and open, with error feedback in the footer
+- **Fast paste** - bracketed paste support inserts pasted text in a single operation instead of one keystroke at a time
+- **Horizontal & vertical scrolling** - the viewport follows the cursor without wrapping or corrupting long lines
+- **Status bar** - current mode, file name, and cursor position (`x, y`)
 
 ## Installation
 
@@ -25,13 +25,15 @@ BLUR V0.1
 ### Build from source
 
 ```bash
-git clone <repository-url>
-cd blur
-cargo build --release
+$> git clone git@github.com:castlesp5/blur.git
+$> cd blur
+$> cargo build --release
 ```
 
-The compiled binary will be available at `target/release/blur`.
-
+or
+```bash
+$> ./blur <optional path file>
+```
 ### Run
 
 ```bash
@@ -40,7 +42,7 @@ cargo run --release
 ./target/release/blur [file]
 ```
 
-If a file path is given as an argument, `blur` will open it (or create it in memory if it doesn't exist yet — it will be written to disk on save).
+If a file path is given as an argument, `blur` will open it (or create it in memory if it doesn't exist yet - it will be written to disk on save).
 
 ## Usage
 
@@ -61,17 +63,14 @@ If a file path is given as an argument, `blur` will open it (or create it in mem
 | `l` / `→` | Move cursor right |
 | `j` / `↓` | Move cursor down |
 | `k` / `↑` | Move cursor up |
-| `a` | Append — move one column right and enter Insert mode |
+| `a` | Append - move one column right and enter Insert mode |
 | `o` | Open a new line below the current line and enter Insert mode |
-| `e` | Move to the end of the current word |
-| `E` | Move to the next space |
-| `b` | Move to the start of the previous word |
+| `e` | Move to the start of the next word |
+| `b` | Move to the end of the previous word |
 | `w` | Save to the current file (prompts for a path if none is set) |
-| `W` | Save as — always prompts for a destination path |
-| `o` *(overloaded, see note below)* | Open a file |
+| `W` | Save as - always prompts for a destination path |
+| `O` | Open a file |
 | `q` | Quit |
-
-> **Note:** `o` is currently bound to both "open a new line below" and "open a file" in different revisions of `normal_mode`. Only one binding can be active at a time in the match arm — decide which behavior you want under `o`, and consider moving the other to a different key (e.g. capital `O`) to avoid a conflict.
 
 ### Insert mode
 
@@ -90,7 +89,7 @@ If a file path is given as an argument, `blur` will open it (or create it in mem
 |---|---|
 | Any character | Append to the path being typed |
 | `Backspace` | Remove last character from the path |
-| `Enter` | Confirm — save or open the file |
+| `Enter` | Confirm - save or open the file |
 | `Esc` | Cancel and return to Normal mode |
 
 ### Pasting
@@ -107,6 +106,10 @@ src/
 └── helpers.rs   # Tab (buffer state) and Highlighter (syntax highlighting)
 ```
 
+### Note  
+- The biggest bug in this editor, it crashed when you write more than 1 byted character, so make sure to use only one byted ascii characters, i will fix this 
+
+
 ### Architecture notes
 
 - **`Tab`** (`helpers.rs`) holds all editor state for a single buffer: the file name, raw text (`input_box`), cursor position (`cursor_x`, `cursor_y`), a flattened byte offset into the buffer (`gcursor`), and scroll offsets.
@@ -115,15 +118,18 @@ src/
 - The **status bar** is split into three regions: current mode (50%), file name (25%), and cursor position (25%).
 
 ## Known limitations
-
 - Cursor and offset tracking operate on byte length rather than Unicode grapheme/character count, so multi-byte UTF-8 input (accented characters, emoji, etc.) may cause the visual cursor column to drift from the actual insertion point.
-- Word-motion commands (`e`, `E`, `b`) currently operate within the current line only and do not wrap across line boundaries.
+- Word-motion commands (`e`,  `b`) currently operate within the current line only and do not wrap across line boundaries.
 - Only a single buffer/tab is supported at this time.
 
 ## License
 
-_Add your chosen license here (e.g. MIT, Apache-2.0)._
+Licensed under either of:
+
+- [MIT License](LICENSE-MIT)
+- [Apache License, Version 2.0](LICENSE-APACHE)
+
 
 ## Contributing
 
-Issues and pull requests are welcome. Please keep cursor/`gcursor` invariants in mind when touching motion or editing code — see **Architecture notes** above.
+Issues and pull requests are welcome. Please keep cursor/`gcursor` invariants in mind when touching motion or editing code - see **Architecture notes** above.
