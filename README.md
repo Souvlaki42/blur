@@ -1,0 +1,129 @@
+# blur
+
+A minimal, vim-inspired terminal text editor written in Rust, built on top of [`ratatui`](https://github.com/ratatui-org/ratatui), [`crossterm`](https://github.com/crossterm-rs/crossterm), and [`syntect`](https://github.com/trishume/syntect).
+
+```
+BLUR V0.1
+```
+
+## Features
+
+- **Modal editing** — Normal and Insert modes, with vim-style motions
+- **Syntax highlighting** — automatic language detection by file extension via `syntect`, rendered with the `base16-mocha.dark` theme
+- **Save / Open prompts** — inline command-line style file save and open, with error feedback in the footer
+- **Fast paste** — bracketed paste support inserts pasted text in a single operation instead of one keystroke at a time
+- **Horizontal & vertical scrolling** — the viewport follows the cursor without wrapping or corrupting long lines
+- **Status bar** — current mode, file name, and cursor position (`x, y`)
+
+## Installation
+
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) (stable toolchain, 2021 edition or later)
+- Cargo
+
+### Build from source
+
+```bash
+git clone <repository-url>
+cd blur
+cargo build --release
+```
+
+The compiled binary will be available at `target/release/blur`.
+
+### Run
+
+```bash
+cargo run --release
+# or, after building:
+./target/release/blur [file]
+```
+
+If a file path is given as an argument, `blur` will open it (or create it in memory if it doesn't exist yet — it will be written to disk on save).
+
+## Usage
+
+### Modes
+
+| Mode | Indicator | Description |
+|---|---|---|
+| Normal | `NORMAL` | Navigate and issue commands |
+| Insert | `INSERT` | Type text directly into the buffer |
+| Save   | `Save file into : ...` | Enter a destination path to save |
+| Open   | `File to Open : ...`   | Enter a path to load a file |
+
+### Normal mode keybindings
+
+| Key | Action |
+|---|---|
+| `h` / `←` | Move cursor left |
+| `l` / `→` | Move cursor right |
+| `j` / `↓` | Move cursor down |
+| `k` / `↑` | Move cursor up |
+| `a` | Append — move one column right and enter Insert mode |
+| `o` | Open a new line below the current line and enter Insert mode |
+| `e` | Move to the end of the current word |
+| `E` | Move to the next space |
+| `b` | Move to the start of the previous word |
+| `w` | Save to the current file (prompts for a path if none is set) |
+| `W` | Save as — always prompts for a destination path |
+| `o` *(overloaded, see note below)* | Open a file |
+| `q` | Quit |
+
+> **Note:** `o` is currently bound to both "open a new line below" and "open a file" in different revisions of `normal_mode`. Only one binding can be active at a time in the match arm — decide which behavior you want under `o`, and consider moving the other to a different key (e.g. capital `O`) to avoid a conflict.
+
+### Insert mode
+
+| Key | Action |
+|---|---|
+| Any character | Insert at cursor |
+| `Enter` | Insert newline |
+| `Tab` | Insert 4 spaces |
+| `Backspace` | Delete character before cursor |
+| `Esc` | Return to Normal mode |
+| `←` `→` `↑` `↓` | Move cursor (does not insert) |
+
+### Save / Open mode
+
+| Key | Action |
+|---|---|
+| Any character | Append to the path being typed |
+| `Backspace` | Remove last character from the path |
+| `Enter` | Confirm — save or open the file |
+| `Esc` | Cancel and return to Normal mode |
+
+### Pasting
+
+`blur` enables terminal bracketed paste mode on startup. Pasting (e.g. `Ctrl+V` or your terminal's paste shortcut) inserts the entire clipboard contents in one operation, so large pastes appear instantly rather than character-by-character. Windows-style (`\r\n`) and legacy Mac-style (`\r`) line endings are normalized to `\n` on insert.
+
+## Project structure
+
+```
+src/
+├── main.rs      # entry point, event loop, and rendering
+├── modes.rs     # normal / insert / save / open mode handlers
+├── controls.rs  # shared cursor movement logic
+└── helpers.rs   # Tab (buffer state) and Highlighter (syntax highlighting)
+```
+
+### Architecture notes
+
+- **`Tab`** (`helpers.rs`) holds all editor state for a single buffer: the file name, raw text (`input_box`), cursor position (`cursor_x`, `cursor_y`), a flattened byte offset into the buffer (`gcursor`), and scroll offsets.
+- **`gcursor`** is the single source of truth for *where* an edit happens in the underlying `String`. Every motion or edit that changes `cursor_x`/`cursor_y` must keep `gcursor` in sync, or insertions/deletions will land at the wrong byte offset.
+- **`Highlighter`** wraps `syntect`, detecting syntax from the file extension and falling back to plain text for buffers with no file name or unrecognized extensions.
+- The **status bar** is split into three regions: current mode (50%), file name (25%), and cursor position (25%).
+
+## Known limitations
+
+- Cursor and offset tracking operate on byte length rather than Unicode grapheme/character count, so multi-byte UTF-8 input (accented characters, emoji, etc.) may cause the visual cursor column to drift from the actual insertion point.
+- Word-motion commands (`e`, `E`, `b`) currently operate within the current line only and do not wrap across line boundaries.
+- Only a single buffer/tab is supported at this time.
+
+## License
+
+_Add your chosen license here (e.g. MIT, Apache-2.0)._
+
+## Contributing
+
+Issues and pull requests are welcome. Please keep cursor/`gcursor` invariants in mind when touching motion or editing code — see **Architecture notes** above.
