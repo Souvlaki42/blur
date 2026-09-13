@@ -1,4 +1,4 @@
-name: Cargo Build & Test
+name: Check
 
 on:
   push:
@@ -8,15 +8,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
-    name: Rust project - latest
+  check:
+    name: Format, Lint & Test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: rustup update stable && rustup default stable
       - run: rustup component add clippy
       - run: cargo clippy --all-targets --all-features --keep-going
       - run: cargo fmt
-      - run: cargo build --verbose
       - run: cargo test --verbose
